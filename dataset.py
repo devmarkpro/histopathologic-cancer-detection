@@ -1,13 +1,26 @@
+"""
+# dataset.py
+This module defines the Dataset class for handling the histopathologic cancer detection dataset.
+It includes methods for loading the dataset, validating paths, and retrieving image information.
+It also defines the ImageInfo class to hold information about individual images.
+"""
+
 import random
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from collections import namedtuple
-from typing import NamedTuple, Iterable, Any
 import tensorflow as tf
 
 
 class ImageInfo:
+    """Class to hold information about an image in the dataset.
+    Attributes:
+        image_path (str): Path to the image file.
+        image_id (str): Unique identifier for the image.
+        shape (tuple): Shape of the image (height, width, channels).
+        image_label (int): Label of the image (0 for non-cancerous, 1 for cancerous).
+    """
+
     def __init__(self, image_path: str, image_id: str, shape: tuple, image_label: int):
         self.image_path = image_path
         self.image_id = image_id
@@ -17,8 +30,29 @@ class ImageInfo:
     def __repr__(self):
         return f"ImageInfo(image_path={self.image_path}, image_id={self.image_id}, shape={self.shape}, image_label={self.image_label})"
 
+    def __str__(self):
+        return f"Image ID: {self.image_id}, Label: {self.image_label}, Shape: {self.shape}, Path: {self.image_path}"
+
+    def __eq__(self, other):
+        if not isinstance(other, ImageInfo):
+            return False
+        return self.image_id == other.image_id
+
 
 class Dataset:
+    """Class to handle the dataset for histopathologic cancer detection.
+    This class provides methods to load the dataset, validate paths, and retrieve image information.
+    Attributes:
+        folder_path (str): Path to the dataset folder.
+        train_labels_file (str): Path to the training labels CSV file.
+        train_images_dir (str): Directory containing training images.
+        test_images_dir (str): Directory containing test images.
+        sample_submission_file (str): Path to the sample submission CSV file.
+        image_shape (tuple): Shape of the images in the dataset.
+        image_size (tuple): Size of the images in the dataset.
+        train_df (pd.DataFrame): DataFrame containing training data.
+    """
+
     def __init__(self, folder_path):
 
         self._folder_path = folder_path
@@ -38,26 +72,32 @@ class Dataset:
 
     @property
     def image_size(self):
+        """Returns the size of the images in the dataset."""
         return self._image_size
 
     @property
     def image_shape(self):
+        """Returns the shape of the images in the dataset."""
         return self._image_shape
 
     @property
     def train_labels_file(self):
+        """Returns the path to the training labels file."""
         return self._train_labels_file
 
     @property
     def train_images_dir(self):
+        """Returns the directory containing training images."""
         return self._train_images_dir
 
     @property
     def test_images_dir(self):
+        """Returns the directory containing test images."""
         return self._test_images_dir
 
     @property
     def train_df(self):
+        """Returns the DataFrame containing training data."""
         return self._train_df
 
     def _set_shape_size(self) -> None:
@@ -145,6 +185,12 @@ class Dataset:
         return dataset
 
     def get_skip_image_ids(self) -> list[str]:
+        """
+        Retrieves a list of image IDs that should be skipped due to invalid formats.
+        This method checks each image in the training images directory and identifies those that are not in TIFF format.
+        Returns:
+            list[str]: A list of image IDs (without the .tif extension) that are invalid.
+        """
         ids = []
         folder_path = self._train_images_dir
         for fname in os.listdir(folder_path):
@@ -164,7 +210,7 @@ class Dataset:
 
         img = tf.py_function(load_py, [path], tf.uint8)
         img = tf.image.convert_image_dtype(img, tf.float32)
-        img.set_shape(self._image_shape)
+        img.set_shape(self._image_shape)  # type: ignore
         label = tf.cast(label, tf.int32)
         label.set_shape(())
         return img, label, img_id
