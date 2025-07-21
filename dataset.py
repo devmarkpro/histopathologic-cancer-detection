@@ -28,15 +28,27 @@ class ImageInfo:
         self.image_label = image_label
 
     def __repr__(self):
-        return f"ImageInfo(image_path={self.image_path}, image_id={self.image_id}, shape={self.shape}, image_label={self.image_label})"
+        return f"""ImageInfo(
+            image_path={self.image_path}, 
+            image_id={self.image_id}, 
+            shape={self.shape}, 
+            image_label={self.image_label})"""
 
     def __str__(self):
-        return f"Image ID: {self.image_id}, Label: {self.image_label}, Shape: {self.shape}, Path: {self.image_path}"
+        return f"""Image ID: {self.image_id},
+            Label: {self.image_label}, 
+            Shape: {self.shape}, 
+            Path: {self.image_path}"""
 
     def __eq__(self, other):
         if not isinstance(other, ImageInfo):
             return False
-        return self.image_id == other.image_id
+        return (
+            self.image_id == other.image_id
+            and self.image_path == other.image_path
+            and self.shape == other.shape
+            and self.image_label == other.image_label
+        )
 
 
 class Dataset:
