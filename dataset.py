@@ -82,6 +82,15 @@ class Dataset:
 
         self._set_shape_size()
 
+    def __repr__(self) -> str:
+        return (
+            f"Dataset(folder_path={self._folder_path}, "
+            f"train_labels_file={self._train_labels_file}, "
+            f"train_images_dir={self._train_images_dir}, "
+            f"test_images_dir={self._test_images_dir}, "
+            f"sample_submission_file={self._sample_submission_file})"
+        )
+
     @property
     def image_size(self):
         """Returns the size of the images in the dataset."""
@@ -112,28 +121,6 @@ class Dataset:
         """Returns the DataFrame containing training data."""
         return self._train_df
 
-    def _set_shape_size(self) -> None:
-        """
-        Sets the image shape and size based on a random training image.
-        This method retrieves a random image from the training set and sets the
-        image shape and size attributes accordingly.
-        Returns:
-            Dataset: The current instance of the Dataset class with updated image shape and size.
-        """
-        img_info = self.get_random_train_image()
-
-        self._image_shape = img_info.shape
-        self._image_size = (img_info.shape[0], img_info.shape[1])
-
-    def __repr__(self) -> str:
-        return (
-            f"Dataset(folder_path={self._folder_path}, "
-            f"train_labels_file={self._train_labels_file}, "
-            f"train_images_dir={self._train_images_dir}, "
-            f"test_images_dir={self._test_images_dir}, "
-            f"sample_submission_file={self._sample_submission_file})"
-        )
-
     def get_random_train_image(self) -> ImageInfo:
         """Returns a random image ID from the training DataFrame."""
         image_id = random.choice(self._train_df["id"].tolist())
@@ -146,30 +133,6 @@ class Dataset:
         return ImageInfo(
             image_path=image_path, image_id=image_id, shape=shape, image_label=label
         )
-
-    def _load_train_data(self):
-        train_df = pd.read_csv(self._train_labels_file)
-        return train_df
-
-    def _validate_folder(self):
-        if not os.path.exists(self._folder_path):
-            raise ValueError(f"Folder path {self._folder_path} does not exist.")
-        if not os.path.isfile(self._train_labels_file):
-            raise ValueError(
-                f"Train labels file {self._train_labels_file} does not exist."
-            )
-        if not os.path.isdir(self._train_images_dir):
-            raise ValueError(
-                f"Train images directory {self._train_images_dir} does not exist."
-            )
-        if not os.path.isdir(self._test_images_dir):
-            raise ValueError(
-                f"Test images directory {self._test_images_dir} does not exist."
-            )
-        if not os.path.isfile(self._sample_submission_file):
-            raise ValueError(
-                f"Sample submission file {self._sample_submission_file} does not exist."
-            )
 
     def load_tf_dataset(self) -> tf.data.Dataset:
         """
@@ -214,6 +177,43 @@ class Dataset:
                 print(f"Skipping image {fname} due to invalid format.")
                 ids.append(fname[:-4])  # Remove .tif extension
         return ids
+
+    def _set_shape_size(self) -> None:
+        """
+        Sets the image shape and size based on a random training image.
+        This method retrieves a random image from the training set and sets the
+        image shape and size attributes accordingly.
+        Returns:
+            Dataset: The current instance of the Dataset class with updated image shape and size.
+        """
+        img_info = self.get_random_train_image()
+
+        self._image_shape = img_info.shape
+        self._image_size = (img_info.shape[0], img_info.shape[1])
+
+    def _load_train_data(self):
+        train_df = pd.read_csv(self._train_labels_file)
+        return train_df
+
+    def _validate_folder(self):
+        if not os.path.exists(self._folder_path):
+            raise ValueError(f"Folder path {self._folder_path} does not exist.")
+        if not os.path.isfile(self._train_labels_file):
+            raise ValueError(
+                f"Train labels file {self._train_labels_file} does not exist."
+            )
+        if not os.path.isdir(self._train_images_dir):
+            raise ValueError(
+                f"Train images directory {self._train_images_dir} does not exist."
+            )
+        if not os.path.isdir(self._test_images_dir):
+            raise ValueError(
+                f"Test images directory {self._test_images_dir} does not exist."
+            )
+        if not os.path.isfile(self._sample_submission_file):
+            raise ValueError(
+                f"Sample submission file {self._sample_submission_file} does not exist."
+            )
 
     def _load_tiff(self, path, label, img_id):  # Updated to accept img_id
         def load_py(p):
