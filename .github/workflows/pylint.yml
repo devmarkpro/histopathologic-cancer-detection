@@ -12,7 +12,7 @@ jobs:
         with:
           miniforge-variant: Mambaforge  # Faster solver
           miniforge-version: latest
-          activate-environment: myenv  # Choose a name for the CI env
+          activate-environment: csca-5642-tf-mac  # Choose a name for the CI env
           environment-file: conda-env-metal.yml  # Point to your YAML file
           use-mamba: true
       - name: Install pylint (if needed)
