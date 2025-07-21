@@ -1,4 +1,4 @@
-name: csca-5642-kaggle-cancer-detection-mac-tf-metal
+name: csca-5642-tf-mac
 channels:
   - anaconda
   - conda-forge
