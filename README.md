@@ -10,3 +10,12 @@ In this dataset, you are provided with a large number of small pathology images 
 The original PCam dataset contains duplicate images due to its probabilistic sampling, however, the version presented on Kaggle does not contain duplicates. We have otherwise maintained the same data and splits as the PCam benchmark.
 
 You can find the dataset on Kaggle: [Histopathologic Cancer Detection](https://www.kaggle.com/c/histopathologic-cancer-detection/data).
+
+
+## Install GraphViz
+
+To visualize the model architecture, you need to install GraphViz. You can do this using the following command:
+
+```bash
+brew install graphviz
+```
