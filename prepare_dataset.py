@@ -91,7 +91,7 @@ class DataPreprocessor:
 
 if __name__ == "__main__":
 
-    data_dir = "./data/histopathologic-cancer-detection"
+    data_dir = "./data"
     # read the arg from the command line for train or test directory
     # if no arg is provided, process both train and test directories
     if len(sys.argv) > 1:
