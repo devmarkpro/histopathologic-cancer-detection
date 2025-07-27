@@ -1,102 +1,70 @@
 import os
+from typing import Literal, Optional
 from PIL import Image
 import pandas as pd
 from multiprocessing import Pool
 from tqdm import tqdm
 import sys
 import shutil
+import pandas as pd
 
 
 class DataPreprocessor:
-    def __init__(self, data_dir: str, output_dir: str):
+    def __init__(
+        self,
+        data_dir: str,
+        output_dir: Optional[str] = "",
+        dataset: Optional[pd.DataFrame] = None,
+    ):
+
+        self.df = (
+            dataset
+            if dataset is not None
+            else pd.read_csv(os.path.join(data_dir, "train_labels.csv"))
+        )
+        self.label_dict = dict(zip(self.df["id"], self.df["label"]))
         self.data_dir = data_dir
         self.train_dir = os.path.join(data_dir, "train")
         self.test_dir = os.path.join(data_dir, "test")
-        self.df = pd.read_csv(os.path.join(data_dir, "train_labels.csv"))
-        self.label_dict = dict(zip(self.df["id"], self.df["label"]))
         self.output_dir = output_dir
-        if len(self.output_dir) == 0:
+        if not self.output_dir:
             self.output_dir = self.data_dir
 
-    def run(self, dir: str, forced=False) -> str:
+    def run(self, dir: Literal["train", "test"], forced=False) -> str:
         """
         Run the preprocessing on the specified directory.
         :param dir: Directory to process (train or test).
         """
         if dir == "train":
             return self._process_train_data(forced)
-        elif dir == "test":
+        if dir == "test":
             return self._process_test_data(forced)
-        else:
-            raise ValueError("Invalid directory specified. Use 'train' or 'test'.")
 
-    def _process_train_data(self, forced=False) -> str:
-        # Create output directories once
-        processed_dir = os.path.join(self.output_dir, "train_processed")
+        raise ValueError("Invalid directory specified. Use 'train' or 'test'.")
 
-        if os.path.exists(processed_dir):
-            print(f"processed directory exists")
-            if not forced:
-                print("forced is False, return without any modification")
-                return processed_dir
-            else:
-                print("Removing the current directory")
-                shutil.rmtree(processed_dir)
-
-        print("creating directories for processed images")
-        os.makedirs(os.path.join(processed_dir, "1"), exist_ok=True)
-        os.makedirs(os.path.join(processed_dir, "0"), exist_ok=True)
-
-        # Get list of all TIFF files (assuming flat directory)
-        files = [f for f in os.listdir(self.train_dir) if f.endswith(".tif")]
+    def _process_data(
+        self,
+        dir: str,
+        output_dir: str,
+        use_subdirectories: bool,
+        enforce_labels: bool = True,
+    ) -> None:
+        files = [f for f in os.listdir(dir) if f.endswith(".tif")]
 
         # Prepare arguments for parallel processing with tqdm
         tasks = []
         for file in tqdm(files, desc="Preparing tasks"):
-            file_path = os.path.join(self.train_dir, file)
+            file_path = os.path.join(dir, file)
             id_str = file[:-4]
             label = self.label_dict.get(id_str)
-            if label is not None:  # Skip if no label (edge case)
-                new_file_path = os.path.join(processed_dir, str(label), id_str + ".jpg")
-                tasks.append((file_path, new_file_path))
-
-        # Parallel conversion
-        num_processes = os.cpu_count()
-        with Pool(num_processes) as pool:
-            list(
-                tqdm(
-                    pool.imap_unordered(self._convert_tiff_to_jpeg_parallel, tasks),
-                    total=len(tasks),
-                    desc="Converting images",
-                )
+            if label is None and enforce_labels is True:
+                continue
+            new_file_path = (
+                os.path.join(output_dir, str(label), id_str + ".jpg")
+                if use_subdirectories
+                else os.path.join(output_dir, id_str + ".jpg")
             )
-        return processed_dir
 
-    def _process_test_data(self, forced=False) -> str:
-        # Create output directory once
-        processed_dir = os.path.join(self.output_dir, "test_processed")
-
-        if os.path.exists(processed_dir):
-            print(f"processed directory exists")
-            if not forced:
-                print("forced is False, return without any modification")
-                return processed_dir
-            else:
-                print("Removing the current directory")
-                shutil.rmtree(processed_dir)
-
-        print("creating directories for processed images")
-
-        os.makedirs(processed_dir, exist_ok=True)
-
-        # Get list of all TIFF files (assuming flat directory)
-        files = [f for f in os.listdir(self.test_dir) if f.endswith(".tif")]
-
-        # Prepare arguments for parallel processing with tqdm
-        tasks = []
-        for file in tqdm(files, desc="Preparing tasks"):
-            file_path = os.path.join(self.test_dir, file)
-            new_file_path = os.path.join(processed_dir, file[:-4] + ".jpg")
             tasks.append((file_path, new_file_path))
 
         # Parallel conversion
@@ -109,6 +77,46 @@ class DataPreprocessor:
                     desc="Converting images",
                 )
             )
+
+    def _process_train_data(self, forced=False) -> str:
+        # Create output directories once
+        processed_dir = os.path.join(self.output_dir, "train_processed")
+
+        if os.path.exists(processed_dir):
+            print("processed directory exists")
+            if not forced:
+                print("forced is False, return without any modification")
+                return processed_dir
+            print("Removing the current directory")
+            shutil.rmtree(processed_dir, ignore_errors=True)
+
+        print("creating directories for processed images")
+        os.makedirs(os.path.join(processed_dir, "1"), exist_ok=True)
+        os.makedirs(os.path.join(processed_dir, "0"), exist_ok=True)
+
+        self._process_data(self.train_dir, processed_dir, use_subdirectories=True)
+        return processed_dir
+
+    def _process_test_data(self, forced=False) -> str:
+        # Create output directory once
+        processed_dir = os.path.join(self.output_dir, "test_processed")
+
+        if os.path.exists(processed_dir):
+            print("processed directory exists")
+            if not forced:
+                print("forced is False, return without any modification")
+                return processed_dir
+            else:
+                print("Removing the current directory")
+                shutil.rmtree(processed_dir, ignore_errors=True)
+
+        print("creating directories for processed images")
+
+        os.makedirs(processed_dir, exist_ok=True)
+
+        self._process_data(
+            self.test_dir, processed_dir, use_subdirectories=False, enforce_labels=False
+        )
         return processed_dir
 
     @staticmethod
