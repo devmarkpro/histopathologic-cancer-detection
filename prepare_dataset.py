@@ -30,15 +30,20 @@ class DataPreprocessor:
         if not self.output_dir:
             self.output_dir = self.data_dir
 
-    def run(self, dir: Literal["train", "test"], forced=False) -> str:
+    def run(
+        self,
+        dir: Literal["train", "test"],
+        forced=False,
+        size: Optional[tuple[int, int]] = None,
+    ) -> str:
         """
         Run the preprocessing on the specified directory.
         :param dir: Directory to process (train or test).
         """
         if dir == "train":
-            return self._process_train_data(forced)
+            return self._process_train_data(forced, size)
         if dir == "test":
-            return self._process_test_data(forced)
+            return self._process_test_data(forced, size)
 
         raise ValueError("Invalid directory specified. Use 'train' or 'test'.")
 
@@ -48,6 +53,7 @@ class DataPreprocessor:
         output_dir: str,
         use_subdirectories: bool,
         enforce_labels: bool = True,
+        size: Optional[tuple[int, int]] = None,
     ) -> None:
         files = [f for f in os.listdir(dir) if f.endswith(".tif")]
 
@@ -65,20 +71,24 @@ class DataPreprocessor:
                 else os.path.join(output_dir, id_str + ".jpg")
             )
 
-            tasks.append((file_path, new_file_path))
+            tasks.append((file_path, new_file_path, size))
 
         # Parallel conversion
         num_processes = os.cpu_count()
         with Pool(num_processes) as pool:
             list(
                 tqdm(
-                    pool.imap_unordered(self._convert_tiff_to_jpeg_parallel, tasks),
+                    pool.imap_unordered(
+                        DataPreprocessor._convert_tiff_to_jpeg_parallel, tasks
+                    ),
                     total=len(tasks),
                     desc="Converting images",
                 )
             )
 
-    def _process_train_data(self, forced=False) -> str:
+    def _process_train_data(
+        self, forced=False, size: Optional[tuple[int, int]] = None
+    ) -> str:
         # Create output directories once
         processed_dir = os.path.join(self.output_dir, "train_processed")
 
@@ -94,10 +104,14 @@ class DataPreprocessor:
         os.makedirs(os.path.join(processed_dir, "1"), exist_ok=True)
         os.makedirs(os.path.join(processed_dir, "0"), exist_ok=True)
 
-        self._process_data(self.train_dir, processed_dir, use_subdirectories=True)
+        self._process_data(
+            self.train_dir, processed_dir, use_subdirectories=True, size=size
+        )
         return processed_dir
 
-    def _process_test_data(self, forced=False) -> str:
+    def _process_test_data(
+        self, forced=False, size: Optional[tuple[int, int]] = None
+    ) -> str:
         # Create output directory once
         processed_dir = os.path.join(self.output_dir, "test_processed")
 
@@ -115,14 +129,27 @@ class DataPreprocessor:
         os.makedirs(processed_dir, exist_ok=True)
 
         self._process_data(
-            self.test_dir, processed_dir, use_subdirectories=False, enforce_labels=False
+            self.test_dir,
+            processed_dir,
+            use_subdirectories=False,
+            enforce_labels=False,
+            size=size,
         )
         return processed_dir
 
     @staticmethod
     def _convert_tiff_to_jpeg_parallel(args):
-        tiff_file, jpeg_file = args
+        if len(args) == 2:
+            tiff_file, jpeg_file = args
+            size = None
+        elif len(args) == 3:
+            tiff_file, jpeg_file, size = args
+        else:
+            raise ValueError("Invalid number of arguments for conversion.")
+
         with Image.open(tiff_file) as img:
+            if size:
+                img = img.resize(size)
             img.convert("RGB").save(jpeg_file, "JPEG")
 
 
