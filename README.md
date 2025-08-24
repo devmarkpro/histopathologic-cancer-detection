@@ -43,18 +43,38 @@ This repository contains code and resources for the Histopathologic Cancer Detec
   - numpy, pandas, scikit-image, scikit-learn
   - matplotlib, tqdm, ipykernel
 
+
 ## Installation
 
+### 1. Clone the repository
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/histopathologic-cancer-detection.git
+git clone https://github.com/devmarkpro/histopathologic-cancer-detection.git
 cd histopathologic-cancer-detection
+```
 
-# Install package and dependencies
+### 2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (if not already installed)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 3. Install dependencies
+Using **uv** (recommended):
+```bash
+uv sync
+```
+
+This will:
+- Create a local virtual environment (`.venv`)
+- Install all dependencies specified in `pyproject.toml` and `uv.lock`
+
+Alternatively, with **pip**:
+```bash
 pip install .
-
-# (Optional) Install GraphViz to visualize model architectures
-brew install graphviz
+```
+### 4. Activate the environment
+```bash
+source .venv/bin/activate   # Linux / macOS
+.venv\Scripts\activate      # Windows
 ```
 
 ## Dataset
