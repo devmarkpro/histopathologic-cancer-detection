@@ -48,7 +48,7 @@ This repository contains code and resources for the Histopathologic Cancer Detec
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/histopathologic-cancer-detection.git
+git clone https://github.com/devmarkpro/histopathologic-cancer-detection.git
 cd histopathologic-cancer-detection
 ```
 
