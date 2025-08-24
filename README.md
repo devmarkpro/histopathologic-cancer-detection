@@ -1,21 +1,99 @@
-# Histopathologic Cancer Detection - Kaggle Competition
+# Histopathologic Cancer Detection
 
-This repository contains code and resources for the Kaggle competition on Histopathologic Cancer Detection. The goal of the competition is to develop a model that can accurately classify images of histopathologic samples as either cancerous or non-cancerous.
+Deep learning models to classify histopathologic image patches as cancerous or non-cancerous for the Kaggle competition.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Dataset](#dataset)
+- [Usage](#usage)
+  - [Jupyter Notebook](#jupyter-notebook)
+  - [Data Loading](#data-loading)
+  - [Training](#training)
+  - [Inference & Submission](#inference--submission)
+
+## Overview
+
+This repository contains code and resources for the Histopathologic Cancer Detection Kaggle competition. Participants build and evaluate convolutional neural networks to identify tumor tissue in 96×96 image patches. A positive label indicates that at least one pixel in the central 32×32 region is tumor.
+
+## Project Structure
+
+```
+├── main.ipynb              # Notebook for EDA, modeling, and submission
+├── image_dataset.py        # PyTorch Dataset for train/test image patches
+├── data/                   # Dataset files
+│   ├── train/              # Training TIFF images
+│   ├── test/               # Test TIFF images
+│   └── train_labels.csv    # CSV of ground-truth labels
+├── checkpoints/            # Model weights (e.g., SimpleCNN, ResNet50)
+├── submissions/            # Generated submission CSVs
+├── pyproject.toml          # Project metadata and dependencies
+├── uv.lock                 # Locked dependency versions
+└── README.md               # This file
+```
+
+## Requirements
+
+- Python 3.13 or later
+- See `pyproject.toml` and `uv.lock` for pinned dependency versions:
+  - torch, torchvision
+  - numpy, pandas, scikit-image, scikit-learn
+  - matplotlib, tqdm, ipykernel
+
+## Installation
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/histopathologic-cancer-detection.git
+cd histopathologic-cancer-detection
+
+# Install package and dependencies
+pip install .
+
+# (Optional) Install GraphViz to visualize model architectures
+brew install graphviz
+```
 
 ## Dataset
 
+1. Register and download data from Kaggle: https://www.kaggle.com/c/histopathologic-cancer-detection/data
+2. Unzip and place under `data/`:
+   - `data/train/`
+   - `data/test/`
+   - `data/train_labels.csv`
+   - (Optional) `data/sample_submission.csv`
 
-In this dataset, you are provided with a large number of small pathology images to classify. Files are named with an image id. The train_labels.csv file provides the ground truth for the images in the train folder. You are predicting the labels for the images in the test folder. A positive label indicates that the center 32x32px region of a patch contains at least one pixel of tumor tissue. Tumor tissue in the outer region of the patch does not influence the label. This outer region is provided to enable fully-convolutional models that do not use zero-padding, to ensure consistent behavior when applied to a whole-slide image.
+## Usage
 
-The original PCam dataset contains duplicate images due to its probabilistic sampling, however, the version presented on Kaggle does not contain duplicates. We have otherwise maintained the same data and splits as the PCam benchmark.
+### Jupyter Notebook
 
-You can find the dataset on Kaggle: [Histopathologic Cancer Detection](https://www.kaggle.com/c/histopathologic-cancer-detection/data).
-
-
-## Install GraphViz
-
-To visualize the model architecture, you need to install GraphViz. You can do this using the following command:
+Launch Jupyter and open the notebook:
 
 ```bash
-brew install graphviz
+jupyter lab  # or jupyter notebook
 ```
+Follow cells in `main.ipynb` for data exploration, model training, and submission generation.
+
+### Data Loading
+
+Use the `ImageDataset` class for efficient loading:
+
+```python
+from image_dataset import ImageDataset
+from torchvision import transforms
+import pandas as pd
+
+labels = pd.read_csv('data/train_labels.csv', index_col=0)
+dataset = ImageDataset(data_dir='data', transform=transforms.ToTensor(), label_df=labels)
+```
+
+### Training
+
+Customize model architectures and hyperparameters in the notebook. Supports CPU, GPU, and Apple MPS devices. Training checkpoints are saved to `checkpoints/`.
+
+### Inference & Submission
+
+After training, run the inference cells in `main.ipynb` to generate a submission CSV under `submissions/`. Submit to Kaggle to evaluate performance.
