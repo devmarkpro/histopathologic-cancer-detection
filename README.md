@@ -14,9 +14,6 @@ Deep learning models to classify histopathologic image patches as cancerous or n
   - [Data Loading](#data-loading)
   - [Training](#training)
   - [Inference & Submission](#inference--submission)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Overview
 
